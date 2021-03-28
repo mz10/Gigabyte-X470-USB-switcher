@@ -29,11 +29,11 @@ Example:
 GBUSBSwitcher.exe 50
 
 Argument can be:
-0 (Voltage 0 V)
-50 (Voltage 5 V)
-51 (Voltage 5.1 V)
-52 (Voltage 5.2 V)
-53 (Voltage 5.3 V)
-switch (switch 0/5V)
+* 0 (Voltage 0 V)
+* 50 (Voltage 5 V)
+* 51 (Voltage 5.1 V)
+* 52 (Voltage 5.2 V)
+* 53 (Voltage 5.3 V)
+* switch (switch 0/5V)
 
 Warning: try this program on your own responsibility. It hasn't been tested on other mainboards, but I don't think it should damage the board.
