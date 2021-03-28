@@ -1,0 +1,225 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+//using Gigabyte.SkinColor;
+using Gigabyte.EasyTune.Common;
+using Gigabyte.USBDACUP.PowerManagement;
+
+namespace GBUSBSwitcher {
+    class Program {
+		public static void Main(string[] args) {
+			if(args.Length == 0) {
+				Console.WriteLine("The program must run as administrator");
+				Console.WriteLine("Use: GBUSBSwitcher.exe argument");
+				Console.WriteLine("Example:\nGBUSBSwitcher.exe 50\n");
+
+				Console.WriteLine("Argument can be:");
+				Console.WriteLine("0 (Voltage 0 V)");
+				Console.WriteLine("50 (Voltage 5 V)");
+				Console.WriteLine("51 (Voltage 5.1 V)");
+				Console.WriteLine("52 (Voltage 5.2 V)");
+				Console.WriteLine("53 (Voltage 5.3 V)");
+				Console.WriteLine("switch (switch 0/5V)");
+
+				Console.ReadLine();
+			}
+			else if(args.Length >= 1) {
+				new USB(args[0]);
+            }
+
+		}
+	}
+
+	public static class Voltage {
+		public static uint V0   = 2147473647;
+		public static uint V5   = 2147483647;
+		public static uint V5_1 = 2147493647;
+		public static uint V5_2 = 2147503647;
+		public static uint V5_3 = 2147513647;
+	}
+	public enum USBPortLocations {
+		None = 0,
+		KeyboardMouseUSB = 112,
+		FrontUSB30_1 = 113,
+		FrontUSB30_2 = 114
+	}
+
+	class USB { 
+		//static EasySetupUsbVoltageManagement biosManager;
+		static USBPowerManagement usbVoltageManager;
+		static List<TuningConfigData> usbTuningDatas;
+		static List<SaveTunningConfigData> usbSaveTunningDatas;
+		//static List<TuningConfigData> biosTuningDatas;
+		//static List<SaveTunningConfigData> biosSaveTunningConfigDatas;
+		static TuningConfigDataConverter tcdConvertor;
+
+		public USB(string type) {
+			try {
+				//var mbType = MotherboardProductTypes.Gaming;
+
+				usbVoltageManager = new USBPowerManagement();
+				usbTuningDatas = new List<TuningConfigData>();
+				usbSaveTunningDatas = new List<SaveTunningConfigData>();
+				tcdConvertor = new TuningConfigDataConverter();
+				//biosManager = new EasySetupUsbVoltageManagement();
+				//biosTuningDatas = new List<TuningConfigData>();
+				//biosSaveTunningConfigDatas = new List<SaveTunningConfigData>();
+				usbVoltageManager.Read(ref usbTuningDatas);
+
+				//this.GetTable();
+				//Update(Voltage.V0);
+			}
+			catch (Exception e) {
+				Console.WriteLine("Failed to load DLLs!:\n" + e.Message);
+			}
+
+			SetVoltage(type);
+		}
+
+		void SetVoltage(string type) {
+			switch (type) {
+				case "0":  Update(Voltage.V0); break;
+				case "50": Update(Voltage.V5); break;
+				case "51": Update(Voltage.V5_1); break;
+				case "52": Update(Voltage.V5_2); break;
+				case "53": Update(Voltage.V5_3); break;
+				case "switch": type = UpdateSwitch(); break;
+				default: Console.WriteLine("Bad voltage value!: " + type); break;
+			}
+
+			var tw = new StreamWriter(@"lastVoltage.txt");
+			tw.Write(type);
+			tw.Close();
+		}
+
+		string UpdateSwitch() {
+			string file = @"lastVoltage.txt";
+			string type = File.Exists(file) ? File.ReadLines(file).First() : "0";
+
+			switch(type) {
+				case "0":	
+					type = "50";
+					Console.WriteLine("Switch on!");
+					Update(Voltage.V5); 
+					break;
+				case "50":	
+					type = "0";
+					Console.WriteLine("Switch off!");
+					Update(Voltage.V0);  
+					break;
+				default: Console.WriteLine("Bad type voltage in file!"); type = "0"; break;
+			}
+
+			return type;
+		}
+
+		/*
+		public void GetTable() {
+			try {
+				GetUSBVoltageData(ref biosTuningDatas);
+
+				if (biosTuningDatas.Count == 0) return;
+
+				usbVoltageManager.Read(ref usbTuningDatas);
+
+				foreach (TuningConfigData dt in usbTuningDatas) {
+					USBPortLocations port = USBPortLocations.None;
+					int easySetup = EasyTableApplicationID.ToEasySetup(dt.ApplicationId);
+
+					if (easySetup != -1 && FindData.IndexOf(easySetup, ref biosTuningDatas) != -1) {
+						if (dt.ApplicationId == Convert.ToInt32((object)USBPortLocations.KeyboardMouseUSB))
+							port = USBPortLocations.KeyboardMouseUSB;
+						else if (dt.ApplicationId == Convert.ToInt32((object)USBPortLocations.FrontUSB30_1))
+							port = USBPortLocations.FrontUSB30_1;
+						else if (dt.ApplicationId == Convert.ToInt32((object)USBPortLocations.FrontUSB30_2))
+							port = USBPortLocations.FrontUSB30_2;
+
+						if (port != USBPortLocations.None) {
+							GetTable(port, dt);
+						}
+					}
+				}
+			}
+			catch { }
+		}
+
+		void GetTable(USBPortLocations portLocation, TuningConfigData tngConf) {
+			if (tngConf.ValueRanges.Count == 0 || tngConf.ValueRanges[0].Precision == 0U)
+				return;
+
+			if (tngConf.CurrentValue > 0U) {
+				double precision = (double)tngConf.ValueRanges[0].Precision;
+				double num;
+				if (tngConf.IsDVIDBaseValueExists) {
+					num = ((double)tngConf.CurrentValue - (double)tngConf.DefaultValue) / precision + 5.0;
+				}
+				else {
+					int currentValue = (int)tngConf.CurrentValue;
+					num = (double)tngConf.CurrentValue / precision;
+				}
+
+			}
+
+			if (tngConf.DefaultValue > 0U) {
+				double precision = (double)tngConf.ValueRanges[0].Precision;
+				double num = !tngConf.IsDVIDBaseValueExists ? (double)tngConf.DefaultValue / precision : ((double)tngConf.DefaultValue - (double)tngConf.DefaultValue) / precision + 5.0;
+			}
+
+			if (tngConf.ActiveValue > 0U) {
+				double precision = (double)tngConf.ValueRanges[0].Precision;
+				double num = !tngConf.IsDVIDBaseValueExists ? (double)tngConf.ActiveValue / precision : ((double)tngConf.ActiveValue - (double)tngConf.DefaultValue) / precision + 5.0;
+			}
+
+			if (tngConf.ValueRanges.Count <= 0) return;
+
+			double precision1 = (double)tngConf.ValueRanges[0].Precision;
+			double num1;
+			double num2;
+
+			if (tngConf.IsDVIDBaseValueExists) {
+				double maxValue = (double)tngConf.ValueRanges[tngConf.ValueRanges.Count - 1].MaximumValue;
+				double defValue = (double)tngConf.DefaultValue;
+				double num3 = defValue;
+				double num4 = (maxValue - num3) / precision1;
+				num1 = ((double)tngConf.ValueRanges[0].BaseValue - defValue) / precision1;
+				num2 = num4 + 5.0;
+				if (num1 < 5.0)
+					num1 = 5.0;
+			}
+			else {
+				num2 = (double)tngConf.ValueRanges[tngConf.ValueRanges.Count - 1].MaximumValue / precision1;
+				num1 = (double)tngConf.ValueRanges[0].BaseValue / precision1;
+			}
+		}
+		*/
+
+		void Update(uint voltage = 0) {
+			try {
+				foreach (TuningConfigData dt in usbTuningDatas) {
+					dt.ActiveValue = dt.CurrentValue;
+					//GetCurrentValue(true, usbTuningDatas, out num);
+					dt.CurrentValue = voltage;
+				}
+
+				tcdConvertor.ToSaveTunningConfigData(ref usbTuningDatas, ref usbSaveTunningDatas);
+				usbVoltageManager.Write(usbSaveTunningDatas);
+
+			}
+			catch (Exception e) {
+				Console.WriteLine("Voltage cannot be written", e.Message);
+			}
+		}
+
+		/*
+		void GetUSBVoltageData(ref List<TuningConfigData> configData) {
+			if (configData == null) return;
+			if (configData.Count > 0) configData.Clear();
+			if (biosManager == null || !biosManager.IsSupported) return;
+
+			biosManager.GetData(ref configData);
+		}
+		*/
+	}
+}
