@@ -1,25 +1,28 @@
 USB switcher (in CMD) for Gigabyte motherboards with function DAC-UP. 
 It replaces the program DAC-UP from Gigabyte and switching of USB works in CMD.
 
-Requirements:
+[Download](https://github.com/mz10/Gigabyte-X470-USB-switcher/blob/main/bin/Release/GBUSBSwitcher.exe?raw=true)
+
 This is tested on X470 AORUS GAMING 7 WIFI, but it may work for others mainboards with DAC-UP.
 
+## Install 
 Install "USB DAC UP 2" and copy GBUSBSwitcher.exe to c:\Program Files (x86)\GIGABYTE\USB DAC\ or copy DLLs from this folder to folder, where is GBUSBSwitcher.exe.
 
-Run GBUSBSwitcher.exe as administrator.
+## Required DLLS:
+* Gigabyte.dll
+* Gigabyte.ComputerSystemHardware.dll
+* Gigabyte.ComputerSystemHardware.BIOS.EasyMethods.dll
+* Gigabyte.EasyTune.Common.dll
+* Gigabyte.EasyTune.EasyFunctions.dll
+* Gigabyte.EasyTune.PowerManagement.dll
+* Gigabyte.NativeFunctions.dll
+* Gigabyte.Resources.dll
+* Gigabyte.Resources.EasyTune.dll
+* Gigabyte.USBDACUP.dll
+* yccV2.dll
 
-Required DLLS:
-Gigabyte.dll
-Gigabyte.ComputerSystemHardware.dll
-Gigabyte.ComputerSystemHardware.BIOS.EasyMethods.dll
-Gigabyte.EasyTune.Common.dll
-Gigabyte.EasyTune.EasyFunctions.dll
-Gigabyte.EasyTune.PowerManagement.dll
-Gigabyte.NativeFunctions.dll
-Gigabyte.Resources.dll
-Gigabyte.Resources.EasyTune.dll
-Gigabyte.USBDACUP.dll
-yccV2.dll
+## Use
+Run GBUSBSwitcher.exe as administrator.
 
 Use: GBUSBSwitcher.exe argument
 Example:
